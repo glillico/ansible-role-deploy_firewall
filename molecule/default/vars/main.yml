@@ -1,0 +1,40 @@
+---
+# vars file for ansible-role-deploy_firewall
+
+# Specifies prerequisite package(s)
+dpfw_pkgs:
+  - procps
+
+# Choices are ufw or firewalld
+dpfw_firewall_type: firewalld
+
+# Choices are iptabels or nftables
+# Make sure this is iptables when testing using docker containers
+dpfw_firewalld_backend: iptables
+
+# ufw rules
+dpfw_ufw_rules:
+  - dpfw_ufw_rule: 'limit'
+    dpfw_ufw_direction: 'in'
+    dpfw_ufw_interface: 'eth0'
+    dpfw_ufw_from_ip: '192.168.60.0/24'
+    dpfw_ufw_from_port: ''
+    dpfw_ufw_to_ip: ''
+    dpfw_ufw_to_port: '22'
+    dpfw_ufw_proto: 'tcp'
+    dpfw_ufw_comment: ''
+
+# firewalld rules
+dpfw_firewalld_rules:
+  - dpfw_firewalld_state: 'enabled'
+    dpfw_firewalld_port: '12345/tcp'
+    dpfw_firewalld_zone: ''
+  - dpfw_firewalld_state: 'disabled'
+    dpfw_firewalld_service: 'dhcpv6-client'
+    dpfw_firewalld_zone: ''
+  - dpfw_firewalld_state: 'disabled'
+    dpfw_firewalld_port: '8080/tcp'
+    dpfw_firewalld_zone: ''
+  - dpfw_firewalld_state: 'disabled'
+    dpfw_firewalld_service: 'cockpit'
+    dpfw_firewalld_zone: ''
