@@ -1,2 +1,31 @@
 ---
 # defaults file for ansible-role-deploy_firewall
+
+# Specifies prerequisite package(s)
+dpfw_pkgs:
+  - procps
+
+# Choices are ufw or firewalld
+dpfw_firewall_type: firewalld
+
+# Choices are iptabels or nftables
+# Make sure this is iptables when testing using docker containers
+dpfw_firewalld_backend: nftables
+
+# ufw rules.
+dpfw_ufw_rules:
+  - dpfw_ufw_rule: ''
+    dpfw_ufw_direction: ''
+    dpfw_ufw_interface: ''
+    dpfw_ufw_from_ip: ''
+    dpfw_ufw_from_port: ''
+    dpfw_ufw_to_ip: ''
+    dpfw_ufw_to_port: ''
+    dpfw_ufw_proto: ''
+    dpfw_ufw_comment: ''
+
+# firewalld rules
+dpfw_firewalld_rules:
+  - dpfw_firewalld_state: ''
+    dpfw_firewalld_port: ''
+    dpfw_firewalld_zone: ''
