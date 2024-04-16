@@ -1,0 +1,51 @@
+---
+# firewalld tasks file for ansible-role-deploy_firewall
+
+- name: Ensure ufw is stopped and disabled.
+  ansible.builtin.service:
+    name: ufw
+    state: stopped
+    enabled: false
+  when: "'ufw' in ansible_facts.packages"
+
+- name: Ensure the firewalld package is present.
+  ansible.builtin.package:
+    name: firewalld
+    state: present
+
+- name: Ensure firewalld is running.
+  ansible.builtin.service:
+    name: firewalld
+    state: started
+
+- name: Set firewalld backend.
+  ansible.builtin.lineinfile:
+    dest: /etc/firewalld/firewalld.conf
+    regexp: "^FirewallBackend=.+"
+    line: "FirewallBackend={{ dpfw_firewalld_backend }}"
+    state: present
+    backup: true
+  register: firewallbackend
+
+- name: FirewallBackend changed service restarted.
+  ansible.builtin.service:
+    name: firewalld
+    state: restarted
+  when: firewallbackend.changed
+
+- name: Apply firewalld rules.
+  ansible.posix.firewalld:
+    state: '{{ item.dpfw_firewalld_state }}'
+    zone: '{{ item.dpfw_firewalld_zone }}'
+    port: '{{ item.dpfw_firewalld_port | default(omit) }}'
+    service: '{{ item.dpfw_firewalld_service | default(omit) }}'
+    immediate: true
+    permanent: true
+    offline: true
+  with_items: '{{ dpfw_firewalld_rules }}'
+
+- name: Ensure firewalld service is running and enabled to start on boot.
+  ansible.builtin.service:
+    name: firewalld
+    state: started
+    enabled: true

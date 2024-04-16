@@ -1,0 +1,49 @@
+---
+# ufw tasks file for ansible-role-deploy_firewall
+
+- name: Ensure firewalld is stopped and disabled.
+  ansible.builtin.service:
+    name: firewalld
+    state: stopped
+    enabled: false
+  when: "'firewalld' in ansible_facts.packages"
+
+- name: Ensure the ufw package and its dependencies are present.
+  ansible.builtin.package:
+    name:
+      - ufw
+      - '{{ item }}'
+    state: present
+  with_items: "{{ dpfw_pkgs }}"
+
+- name: Apply ufw rules.
+  community.general.ufw:
+    rule: '{{ item.dpfw_ufw_rule }}'
+    proto: '{{ item.dpfw_ufw_proto }}'
+    direction: '{{ item.dpfw_ufw_direction }}'
+    interface: '{{ item.dpfw_ufw_interface | default(omit) }}'
+    from_ip: '{{ item.dpfw_ufw_from_ip }}'
+    from_port: '{{ item.dpfw_ufw_from_port | default(omit) }}'
+    to_ip: '{{ item.dpfw_ufw_to_ip | default("any", true) }}'
+    to_port: '{{ item.dpfw_ufw_to_port | default(omit) }}'
+    comment: '{{ item.dpfw_ufw_comment | default(omit) }}'
+  with_items: '{{ dpfw_ufw_rules }}'
+
+- name: Set ufw default incoming policy to deny.
+  community.general.ufw:
+    policy: deny
+    direction: incoming
+
+- name: Set ufw default outgoing policy to allow.
+  community.general.ufw:
+    policy: allow
+    direction: outgoing
+- name: Ensure ufw is enabled.
+  community.general.ufw:
+    state: enabled
+
+- name: Ensure ufw service is running and enabled to start on boot.
+  ansible.builtin.service:
+    name: 'ufw'
+    state: started
+    enabled: true
