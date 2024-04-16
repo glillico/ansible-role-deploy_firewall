@@ -1,0 +1,30 @@
+---
+# RedHat verify file for configure_firewall
+
+    - name: Check the firewalld package status.
+      package:
+        name: firewalld
+        state: present
+      check_mode: yes
+      register: pkg_status
+
+    - name: Test that the firewalld package is installed.
+      assert:
+        that:
+          - not pkg_status.changed
+
+    - name: Check firewalld rules have been created.
+      ansible.posix.firewalld:
+        state: '{{ item.dpfw_firewalld_state }}'
+        zone: '{{ item.dpfw_firewalld_zone }}'
+        port: '{{ item.dpfw_firewalld_port | default(omit) }}'
+        service: '{{ item.dpfw_firewalld_service | default(omit) }}'
+        immediate: true
+        permanent: true
+        offline: true
+      with_items: '{{ dpfw_firewalld_rules }}'
+      check_mode: true
+      register: result
+      failed_when: result.changed
+      # loop_control:
+      #   loop_var: ver_item

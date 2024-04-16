@@ -1,0 +1,13 @@
+---
+# This is an example playbook to execute Ansible tests.
+
+- name: Verify.
+  hosts: all
+
+  pre_tasks:
+    - name: Include variables.
+      ansible.builtin.include_vars: 'vars/main.yml'
+
+  tasks:
+    - name: Include package specific tasks.
+      ansible.builtin.include_tasks: 'tests/{{ dpfw_firewall_type }}.yml'

@@ -1,0 +1,35 @@
+---
+# Debian verify file for configure_firewall
+
+    - name: Check the ufw package status.
+      ansible.builtin.package:
+        name:
+          - ufw
+          - '{{ item }}'
+        state: present
+      with_items: "{{ dpfw_pkgs }}"
+      check_mode: yes
+      register: pkg_status
+
+    - name: Test that the ufw package is installed.
+      assert:
+        that:
+          - not pkg_status.changed
+
+    - name: Check ufw rules have been created.
+      community.general.ufw:
+        rule: '{{ item.dpfw_ufw_rule }}'
+        proto: '{{ item.dpfw_ufw_proto }}'
+        direction: '{{ item.dpfw_ufw_direction }}'
+        interface: '{{ item.dpfw_ufw_interface | default(omit) }}'
+        from_ip: '{{ item.dpfw_ufw_from_ip }}'
+        from_port: '{{ item.dpfw_ufw_from_port | default(omit) }}'
+        to_ip: '{{ item.dpfw_ufw_to_ip | default("any", true) }}'
+        to_port: '{{ item.dpfw_ufw_to_port | default(omit) }}'
+        comment: '{{ item.dpfw_ufw_comment | default(omit) }}'
+      with_items: '{{ dpfw_ufw_rules }}'
+      check_mode: true
+      register: result
+      failed_when: result.changed
+      # loop_control:
+      #   loop_var: ver_item
