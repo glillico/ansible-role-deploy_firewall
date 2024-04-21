@@ -1,0 +1,71 @@
+---
+name: CI
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+
+defaults:
+  run:
+    working-directory: 'glillico.deploy_firewall'
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out git repository.
+        uses: actions/checkout@v2
+        with:
+          path: 'glillico.deploy_firewall'
+
+      - name: Setup python 3.
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install package dependencies.
+        run: pip3 install yamllint
+
+      - name: Perform linting.
+        run: |
+          yamllint .
+
+  molecule:
+    needs: lint
+    name: Molecule
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        distro:
+          - debian12
+          - rockylinux9
+          - ubuntu2204
+        tag:
+          - latest
+    steps:
+      - name: Check out git repository.
+        uses: actions/checkout@v2
+        with:
+          path: 'glillico.deploy_firewall'
+
+      - name: Setup python 3.
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install package dependencies.
+        run: pip3 install ansible docker molecule "molecule-plugins[docker]"
+
+      - name: Ensure the ip6_tables kernel module is loaded.
+        run: sudo insmod /lib/modules/`uname -r`/kernel/net/ipv6/netfilter/ip6_tables.ko
+
+      - name: Perform molecule tests.
+        run: molecule test
+        env:
+          PY_COLORS: '1'
+          ANSIBLE_FORCE_COLOR: '1'
+          MOLECULE_DISTRO: ${{ matrix.distro }}
+          MOLECULE_TAG: ${{ matrix.tag }}
