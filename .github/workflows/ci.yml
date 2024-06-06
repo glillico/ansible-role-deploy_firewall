@@ -16,12 +16,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out git repository.
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           path: 'glillico.deploy_firewall'
 
       - name: Setup python 3.
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: '3.x'
 
@@ -32,6 +32,42 @@ jobs:
         run: |
           yamllint .
 
+  molecule-legacy:
+    needs: lint
+    name: Molecule (Ansible 2.16.x)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        distro:
+          - rockylinux8
+        tag:
+          - latest
+    steps:
+      - name: Check out git repository.
+        uses: actions/checkout@v4
+        with:
+          path: 'glillico.deploy_firewall'
+
+      - name: Setup python 3.
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install package dependencies.
+        run: pip3 install "ansible-core<2.17" docker molecule "molecule-plugins[docker]"
+
+      - name: Ensure the ip6_tables kernel module is loaded.
+        run: sudo insmod /lib/modules/`uname -r`/kernel/net/ipv6/netfilter/ip6_tables.ko
+
+      - name: Perform molecule tests.
+        run: molecule test
+        env:
+          PY_COLORS: '1'
+          ANSIBLE_FORCE_COLOR: '1'
+          MOLECULE_DISTRO: ${{ matrix.distro }}
+          MOLECULE_TAG: ${{ matrix.tag }}
+
   molecule:
     needs: lint
     name: Molecule
@@ -40,19 +76,21 @@ jobs:
       fail-fast: false
       matrix:
         distro:
+          - debian11
           - debian12
           - rockylinux9
           - ubuntu2204
+          - ubuntu2404
         tag:
           - latest
     steps:
       - name: Check out git repository.
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           path: 'glillico.deploy_firewall'
 
       - name: Setup python 3.
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: '3.x'
 
