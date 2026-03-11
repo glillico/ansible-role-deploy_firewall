@@ -35,7 +35,7 @@ jobs:
   molecule-legacy:
     needs: lint
     name: Molecule (Ansible 2.16.x)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
